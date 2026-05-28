@@ -57,11 +57,4 @@ ALTER PUBLICATION supabase_realtime ADD TABLE sale_items;
 ALTER PUBLICATION supabase_realtime ADD TABLE utangs;
 ALTER PUBLICATION supabase_realtime ADD TABLE utang_history;
 
--- Sample data
-INSERT INTO paninda (name, price, stock) VALUES
-  ('Surf Powder', 8, 30),
-  ('Downy Fabcon', 8, 25),
-  ('Dove Shampoo', 9, 20),
-  ('Frootees', 8, 40),
-  ('Mantika (buong bote)', 40, 10)
-ON CONFLICT DO NOTHING;
+
