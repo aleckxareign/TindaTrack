@@ -18,10 +18,7 @@ const Benta = forwardRef(function Benta(_, ref) {
     api.get(`/sales?period=${period}`).then(setSales);
   }, [period]);
 
-  useEffect(() => {
-    api.get('/paninda').then(setPaninda);
-  }, []);
-
+  useEffect(() => { api.get('/paninda').then(setPaninda); }, []);
   useEffect(() => { load(); }, [load]);
   useRealtime('paninda', load);
   useImperativeHandle(ref, () => ({ openSale: () => openModal() }));
@@ -55,11 +52,15 @@ const Benta = forwardRef(function Benta(_, ref) {
     load();
   };
 
+  const deleteSale = async (id) => {
+    if (!window.confirm('Tatanggalin ang benta na ito?')) return;
+    await api.delete(`/sales/${id}`);
+    toast('Natanggal ang benta.');
+    load();
+  };
+
   const tabs = [{ key:'today', label:'Ngayon' }, { key:'week', label:'Linggong ito' }, { key:'month', label:'Buwang ito' }];
-  const todayTotal = sales.filter(s => {
-    const d = new Date(s.created_at);
-    return d.toDateString() === new Date().toDateString();
-  }).reduce((a,b)=>a+b.total,0);
+  const todayTotal = sales.filter(s => new Date(s.created_at).toDateString() === new Date().toDateString()).reduce((a,b)=>a+b.total,0);
   const monthTotal = sales.reduce((a,b)=>a+b.total,0);
 
   return (
@@ -92,8 +93,8 @@ const Benta = forwardRef(function Benta(_, ref) {
         const payLabel = sale.payment === 'utang' ? 'Utang' : sale.payment === 'gcash' ? 'GCash' : 'Cash';
         return (
           <Card key={sale.id}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <div>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+              <div style={{ flex:1 }}>
                 <div style={{ fontSize:16, fontWeight:500 }}>{fmt(sale.total)}</div>
                 <div style={{ fontSize:13, color:'var(--muted)', marginTop:2 }}>
                   {sale.items?.map(i=>`${i.name} x${i.qty}`).join(', ')}
@@ -102,7 +103,12 @@ const Benta = forwardRef(function Benta(_, ref) {
                   {d.toLocaleDateString('en-PH',{month:'short',day:'numeric'})} {d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})}
                 </div>
               </div>
-              <Badge color={payColor}>{payLabel}</Badge>
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6 }}>
+                <Badge color={payColor}>{payLabel}</Badge>
+                <button onClick={() => deleteSale(sale.id)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--muted)', fontSize:16, padding:2 }}>
+                  <i className="ti ti-trash" />
+                </button>
+              </div>
             </div>
           </Card>
         );
