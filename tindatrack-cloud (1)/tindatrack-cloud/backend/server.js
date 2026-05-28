@@ -46,7 +46,7 @@ app.get('/api/dashboard', async (req, res) => {
     .map(u => ({ name: u.name, remaining: u.amount - u.paid }))
     .sort((a, b) => b.remaining - a.remaining).slice(0, 3);
 
-  res.json({ todayEarnings, monthEarnings, totalUtang, panindaCount, topSellers, dueUtangs: due });
+                                   res.json({ todayEarnings, monthEarnings, totalUtang, panindaCount, topSellers, dueUtangs: due });
 });
 
 app.listen(PORT, () => console.log(`TindaTrack backend running on port ${PORT}`));
