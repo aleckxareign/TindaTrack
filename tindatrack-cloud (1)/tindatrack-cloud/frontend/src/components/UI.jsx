@@ -98,3 +98,30 @@ export function BigBtn({ icon, label, color = 'default', onClick }) {
     </button>
   );
 }
+export function Checkbox({ checked, onChange }) {
+  return (
+    <div onClick={(e) => { e.stopPropagation(); onChange(); }} style={{
+      width: 22, height: 22, borderRadius: 6,
+      border: checked ? 'none' : '1.5px solid var(--border)',
+      background: checked ? 'var(--green-mid)' : '#fff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s'
+    }}>
+      {checked && <i className="ti ti-check" style={{ color: '#fff', fontSize: 14, fontWeight: 700 }} />}
+    </div>
+  );
+}
+export function FloatingBar({ children }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 70, left: '50%', transform: 'translateX(-50%)',
+      width: 'calc(100% - 32px)', maxWidth: 448, padding: '12px 16px',
+      background: '#fff', border: '0.5px solid var(--border)',
+      boxShadow: '0 -4px 24px rgba(0,0,0,0.1)',
+      borderRadius: 12, zIndex: 50, display: 'flex', alignItems: 'center', gap: 12,
+      animation: 'floatUp 0.2s ease-out'
+    }}>
+      {children}
+    </div>
+  );
+}
