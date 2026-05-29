@@ -6,13 +6,26 @@ const supabase = require('../db');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.get('/', async (req, res) => {
-  const { data, error } = await supabase.from('paninda').select('*').order('name', { ascending: true });
+    let query = supabase.from('paninda').select('*').order('name', { ascending: true });
+  if (req.query.category) {
+    query = query.eq('category', req.query.category);
+  }
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message, details: error.details, hint: error.hint, code: error.code });
   res.json(data);
 });
 
+// Batch delete must be defined before /:id routes
+router.post('/batch-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !ids.length) return res.status(400).json({ error: 'Walang napiling paninda.' });
+  const { error } = await supabase.from('paninda').delete().in('id', ids);
+  if (error) return res.status(500).json({ error: error.message, details: error.details, hint: error.hint, code: error.code });
+  res.json({ success: true, deleted: ids.length });
+});
+
 router.post('/', upload.single('img'), async (req, res) => {
-  const { name, price, stock } = req.body;
+  const { name, price, stock, category } = req.body;
   if (!name || !price) return res.status(400).json({ error: 'Pangalan at presyo ang kailangan.' });
 
   let img = '';
@@ -21,21 +34,23 @@ router.post('/', upload.single('img'), async (req, res) => {
     const { error: uploadError } = await supabase.storage
       .from('paninda-images')
       .upload(filename, req.file.buffer, { contentType: req.file.mimetype });
-    if (!uploadError) {
+    if (uploadError) {
+      console.error('Image upload error:', uploadError);
+    } else {
       const { data: urlData } = supabase.storage.from('paninda-images').getPublicUrl(filename);
       img = urlData.publicUrl;
     }
   }
 
   const { data, error } = await supabase.from('paninda')
-    .insert({ name, price: parseFloat(price), stock: parseInt(stock) || 0, img })
+    .insert({ name, price: parseFloat(price), stock: parseInt(stock) || 0, img, category: category || 'Iba Pa' })
     .select().single();
   if (error) return res.status(500).json({ error: error.message, details: error.details, hint: error.hint, code: error.code });
   res.json(data);
 });
 
 router.put('/:id', upload.single('img'), async (req, res) => {
-  const { name, price, stock } = req.body;
+  const { name, price, stock, category } = req.body;
   const { data: existing, error: fetchError } = await supabase.from('paninda').select('*').eq('id', req.params.id).single();
   if (fetchError || !existing) return res.status(404).json({ error: 'Hindi mahanap.' });
 
@@ -45,14 +60,16 @@ router.put('/:id', upload.single('img'), async (req, res) => {
     const { error: uploadError } = await supabase.storage
       .from('paninda-images')
       .upload(filename, req.file.buffer, { contentType: req.file.mimetype });
-    if (!uploadError) {
+  if (uploadError) {
+    console.error('Image upload error:', uploadError);
+  } else {
       const { data: urlData } = supabase.storage.from('paninda-images').getPublicUrl(filename);
       img = urlData.publicUrl;
     }
   }
 
   const { data, error } = await supabase.from('paninda')
-    .update({ name, price: parseFloat(price), stock: parseInt(stock) || 0, img })
+     .update({ name, price: parseFloat(price), stock: parseInt(stock) || 0, img, category: category || existing.category || 'Iba Pa' })
     .eq('id', req.params.id).select().single();
   if (error) return res.status(500).json({ error: error.message, details: error.details, hint: error.hint, code: error.code });
   res.json(data);
