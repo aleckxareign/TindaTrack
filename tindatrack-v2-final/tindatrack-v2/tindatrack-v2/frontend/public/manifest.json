@@ -1,0 +1,9 @@
+{
+  "short_name": "TindaTrack",
+  "name": "TindaTrack - Sari-Sari Store",
+  "icons": [{ "src": "favicon.ico", "sizes": "64x64", "type": "image/x-icon" }],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#639922",
+  "background_color": "#ffffff"
+}
