@@ -1,0 +1,57 @@
+const express = require('express');
+const router = express.Router();
+const supabase = require('../db');
+
+router.get('/', async (req, res) => {
+  const { data: all, error } = await supabase.from('utangs')
+    .select('*, utang_history(*)').order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  const filtered = all.filter(u => u.amount > u.paid).map(u => ({ ...u, history: u.utang_history }));
+  res.json(filtered);
+});
+
+router.post('/', async (req, res) => {
+  const { name, amount, note, items } = req.body;
+  if (!name || !amount) return res.status(400).json({ error: 'Pangalan at halaga ang kailangan.' });
+  const finalNote = items && items.length ? items.join(', ') : (note || '');
+  const { data: existing } = await supabase.from('utangs').select('*').ilike('name', name).single();
+  let utangId;
+  if (existing) {
+    await supabase.from('utangs').update({ amount: existing.amount + parseFloat(amount) }).eq('id', existing.id);
+    utangId = existing.id;
+  } else {
+    const { data: newU } = await supabase.from('utangs').insert({ name, amount: parseFloat(amount), paid: 0 }).select().single();
+    utangId = newU.id;
+  }
+  await supabase.from('utang_history').insert({ utang_id: utangId, type: 'utang', amount: parseFloat(amount), note: finalNote });
+  const { data } = await supabase.from('utangs').select('*').eq('id', utangId).single();
+  res.json(data);
+});
+
+router.post('/:id/pay', async (req, res) => {
+  const { amount } = req.body;
+  const { data: utang } = await supabase.from('utangs').select('*').eq('id', req.params.id).single();
+  if (!utang) return res.status(404).json({ error: 'Hindi mahanap.' });
+  const pay = Math.min(parseFloat(amount), utang.amount - utang.paid);
+  await supabase.from('utangs').update({ paid: utang.paid + pay }).eq('id', utang.id);
+  await supabase.from('utang_history').insert({ utang_id: utang.id, type: 'bayad', amount: pay, note: '' });
+  res.json({ success: true, paid: pay });
+});
+
+router.delete('/:id', async (req, res) => {
+  await supabase.from('utang_history').delete().eq('utang_id', req.params.id);
+  const { error } = await supabase.from('utangs').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
+router.post('/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !ids.length) return res.status(400).json({ error: 'Walang pinili.' });
+  await supabase.from('utang_history').delete().in('utang_id', ids);
+  const { error } = await supabase.from('utangs').delete().in('id', ids);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
+module.exports = router;
