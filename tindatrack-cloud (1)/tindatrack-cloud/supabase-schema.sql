@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS paninda (
   price NUMERIC NOT NULL,
   stock INTEGER DEFAULT 0,
   img TEXT DEFAULT '',
+  category TEXT DEFAULT 'Iba Pa',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -57,4 +58,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE sale_items;
 ALTER PUBLICATION supabase_realtime ADD TABLE utangs;
 ALTER PUBLICATION supabase_realtime ADD TABLE utang_history;
 
-
+-- =============================================
+-- MIGRATION: Run this if table already exists
+-- =============================================
+ALTER TABLE paninda ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'Iba Pa';
