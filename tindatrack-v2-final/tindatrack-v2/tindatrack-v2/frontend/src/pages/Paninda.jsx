@@ -4,7 +4,7 @@ import { Modal, Field, Input, Select, SubmitBtn, Card, EmptyState, Badge } from 
 import { useToast } from '../context/ToastContext';
 import { useRealtime } from '../useRealtime';
 
-const CATEGORIES = ['Lahat', 'Matamis', 'Biskwit', 'Chichirya', 'Inumin', 'Panglaba', 'Condiments', 'Pang-alagaan', 'Iba Pa'];
+const CATEGORIES = ['Lahat', 'Matamis', 'Biskwit', 'Chichirya', 'Inumin', 'Panglaba', 'Condiments', 'Hygiene', 'Iba Pa'];
 
 const Paninda = forwardRef(function Paninda(_, ref) {
   const [items, setItems] = useState([]);
