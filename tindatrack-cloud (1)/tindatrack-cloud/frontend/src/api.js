@@ -14,3 +14,8 @@ export const api = {
 
 export const imgUrl = (img) => img || null;
 export const fmt = (n) => '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+export const CATEGORIES = [
+  'Candy', 'Biscuit', 'Chichirya', 'Inumin',
+  'Panglaba', 'Condiments', 'Hygiene', 'Iba Pa'
+];
