@@ -3,12 +3,6 @@ const router = express.Router();
 const supabase = require('../db');
 
 router.get('/', async (req, res) => {
-  const { data, error } = await supabase.from('utangs')
-    .select('*, utang_history(*)')
-    .filter('amount', 'gt', supabase.rpc)
-    .order('created_at', { ascending: false });
-
-  // Manual filter: amount > paid
   const { data: all, error: err2 } = await supabase.from('utangs')
     .select('*, utang_history(*)').order('created_at', { ascending: false });
   if (err2) return res.status(500).json({ error: err2.message });
@@ -18,6 +12,15 @@ router.get('/', async (req, res) => {
     history: u.utang_history
   }));
   res.json(filtered);
+});
+
+// Batch delete — must be before /:id routes
+router.post('/batch-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !ids.length) return res.status(400).json({ error: 'Walang napiling utang.' });
+  const { error } = await supabase.from('utangs').delete().in('id', ids);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true, deleted: ids.length });
 });
 
 router.post('/', async (req, res) => {
@@ -48,6 +51,12 @@ router.post('/:id/pay', async (req, res) => {
   await supabase.from('utangs').update({ paid: utang.paid + pay }).eq('id', utang.id);
   await supabase.from('utang_history').insert({ utang_id: utang.id, type: 'bayad', amount: pay, note: '' });
   res.json({ success: true, paid: pay });
+});
+
+router.delete('/:id', async (req, res) => {
+  const { error } = await supabase.from('utangs').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
 module.exports = router;
