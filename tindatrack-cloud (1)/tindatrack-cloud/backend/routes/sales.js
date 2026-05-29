@@ -20,6 +20,15 @@ router.get('/', async (req, res) => {
   res.json(data.map(s => ({ ...s, items: s.sale_items })));
 });
 
+// Batch delete — must be before /:id
+router.post('/batch-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !ids.length) return res.status(400).json({ error: 'Walang napiling benta.' });
+  const { error } = await supabase.from('sales').delete().in('id', ids);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true, deleted: ids.length });
+});
+
 router.post('/', async (req, res) => {
   const { items, total, payment, utangName } = req.body;
   if (!items || !items.length) return res.status(400).json({ error: 'Walang items.' });
